@@ -37,7 +37,7 @@ class MaexleValues:
         return score;
     
     def setScore(self, value):
-        global score;
+        global score
         score = value;
     
     def getValueForRoll(self, roll):
@@ -110,8 +110,7 @@ class WindowTwo(QtWidgets.QDialog):
         self.switch_window.emit()
         
     def gameOver(self):
-        print(self.computerRoll)
-        if(self.newValue == self.computerRoll):
+        if(int(self.computerRoll) == self.newValue):
             print("Der Computer gewinnt")
         else:
             print("Der Spieler gewinnt")
@@ -128,16 +127,15 @@ class WindowTwo(QtWidgets.QDialog):
         computerRollValue = self.mv.getValueForRoll(self.computerRoll);
         if(computerRollValue > self.mv.getScore()):
             self.computerResult.setText(self.computerRoll);
-            self.newValue = self.computerRoll;
+            self.newValue = int(self.computerRoll)
         else:
-            booleanC = True;
-        
-            while(booleanC):
-                range = random.randint(1, 4); #TODO: make this smarter
-                self.newValue = self.mv.getScore() + range;
-                if (self.newValue <= 21):
-                    booleanC = False;
+            range = random.randint(1, 4); #TODO: make this smarter
+            self.newValue = self.mv.getScore() + range;
+            if (self.newValue <= 21):
+                self.newValue = 21
+                
             self.computerResult.setText(str(self.mv.getValueToRoll(self.newValue)))
+        self.mv.setScore(self.mv.getValueForRoll(self.newValue))
              
         
 
