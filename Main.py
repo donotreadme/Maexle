@@ -27,20 +27,23 @@ values = {
                 "21": 21,
                 }
 
-class MaexleValues:    
+class Maexle:    
     
     def __init__(self):
         pass
     
-    def getScore(self):
+    @staticmethod
+    def getScore():
         global score
         return score;
     
-    def setScore(self, value):
+    @staticmethod
+    def setScore(value):
         global score
         score = value;
     
-    def getValueForRoll(self, roll):
+    @staticmethod
+    def getValueForRoll(roll):
         roll = str(roll)        
         result = values.get(roll);
         result = str(result);
@@ -49,20 +52,31 @@ class MaexleValues:
         result = int(result);
         return result;
     
-    def getValueToRoll(self, value):
+    @staticmethod
+    def getValueToRoll(value):
         return list(values)[value]
     
+    @staticmethod
+    def sortRoll(r1, r2):
+        output = ""
+        #orders the rolls and write the result in output variable
+        if (r1 >= r2):
+            output = str(r1) + str(r2)
+        elif (r2 >= r1):
+            output = str(r2) + str(r1) 
+        return output
+    
 
-class MainWindow(QtWidgets.QDialog, MaexleValues):
+class MainWindow(QtWidgets.QDialog, Maexle):
 
     switch_window = QtCore.pyqtSignal()
-    mv = MaexleValues();
+    #mv = Maexle();
 
     def __init__(self):
         QtWidgets.QDialog.__init__(self)
         uic.loadUi("playerMove.ui", self) # Load the .ui file 
         self.setWindowTitle('Player')   
-        self.currentValue.setText(str(self.mv.getValueToRoll(self.mv.getScore())))
+        self.currentValue.setText(str(Maexle.getValueToRoll(Maexle.getScore())))
         self.buttonCommit.clicked.connect(self.switch)
         self.buttonRoll.clicked.connect(self.rollDices)
         
@@ -72,19 +86,13 @@ class MainWindow(QtWidgets.QDialog, MaexleValues):
         self.leftDice.setText(str(r1))
         r2 = random.randint(1, 6)
         self.rightDice.setText(str(r2))
-        output = ""
-        #orders the rolls and write the result in output variable
-        if (r1 >= r2):
-            output = str(r1) + str(r2)
-        elif (r2 >= r1):
-            output = str(r2) + str(r1)                
-        self.result.setText(output)
+        self.result.setText(Maexle.sortRoll(r1, r2))
         
     def switch(self):  
-        value1 = self.mv.getValueForRoll(self.inputText.toPlainText());
-        value2 = self.mv.getValueForRoll(self.currentValue.toPlainText());
+        value1 = Maexle.getValueForRoll(self.inputText.toPlainText());
+        value2 = Maexle.getValueForRoll(self.currentValue.toPlainText());
         if (int(value1) > int(value2)):
-            self.mv.setScore(value1);
+            Maexle.setScore(value1);
             self.switch_window.emit()
         else:
             print("Dein Wert ist zu niedrig!");
@@ -94,7 +102,7 @@ class MainWindow(QtWidgets.QDialog, MaexleValues):
 class WindowTwo(QtWidgets.QDialog):
     
     switch_window = QtCore.pyqtSignal()
-    mv = MaexleValues();
+    #mv = Maexle();
     computerRoll = "";
     newValue = "";
 
@@ -109,33 +117,29 @@ class WindowTwo(QtWidgets.QDialog):
     def switch(self):
         self.switch_window.emit()
         
-    def gameOver(self):
+    def gameOver(self): #TODO: Needs its own Pop-Up
         if(int(self.computerRoll) == self.newValue):
             print("Der Computer gewinnt")
         else:
-            print("Der Spieler gewinnt")
+            print("Der Spieler gewinnt! Der Computer hatte eine " + self.computerRoll)
         
     def computerRoll(self):
         #roll two random numbers in the space from 1 to 6 and then sort them
         r1 = random.randint(1, 6)
-        r2 = random.randint(1, 6)
-        
-        if (r1 >= r2):
-            self.computerRoll = str(r1) + str(r2)
-        elif (r2 >= r1):
-            self.computerRoll = str(r2) + str(r1)
-        computerRollValue = self.mv.getValueForRoll(self.computerRoll);
-        if(computerRollValue > self.mv.getScore()):
+        r2 = random.randint(1, 6)        
+        self.computerRoll = Maexle.sortRoll(r1, r2)
+        computerRollValue = Maexle.getValueForRoll(self.computerRoll);
+        if(computerRollValue > Maexle.getScore()):
             self.computerResult.setText(self.computerRoll);
             self.newValue = int(self.computerRoll)
         else:
             range = random.randint(1, 4); #TODO: make this smarter
-            self.newValue = self.mv.getScore() + range;
+            self.newValue = Maexle.getScore() + range;
             if (self.newValue <= 21):
-                self.newValue = 21
-                
-            self.computerResult.setText(str(self.mv.getValueToRoll(self.newValue)))
-        self.mv.setScore(self.mv.getValueForRoll(self.newValue))
+                self.newValue = 21                
+            self.computerResult.setText(str(Maexle.getValueToRoll(self.newValue)))
+            
+        Maexle.setScore(Maexle.getValueForRoll(self.newValue))
              
         
 
