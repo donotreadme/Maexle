@@ -59,7 +59,7 @@ class Maexle:
     @staticmethod
     def sortRoll(r1, r2):
         output = ""
-        #orders the rolls and write the result in output variable
+        #orders the rolls and write the result in the output variable
         if (r1 >= r2):
             output = str(r1) + str(r2)
         elif (r2 >= r1):
@@ -70,7 +70,7 @@ class Maexle:
 class MainWindow(QtWidgets.QDialog, Maexle):
 
     switch_window = QtCore.pyqtSignal()
-    #mv = Maexle();
+    playersRoll = 0
 
     def __init__(self):
         QtWidgets.QDialog.__init__(self)
@@ -86,23 +86,37 @@ class MainWindow(QtWidgets.QDialog, Maexle):
         self.leftDice.setText(str(r1))
         r2 = random.randint(1, 6)
         self.rightDice.setText(str(r2))
-        self.result.setText(Maexle.sortRoll(r1, r2))
+        self.playersRoll = Maexle.sortRoll(r1, r2)
+        self.result.setText(self.playersRoll)
         
     def switch(self):  
         value1 = Maexle.getValueForRoll(self.inputText.toPlainText());
         value2 = Maexle.getValueForRoll(self.currentValue.toPlainText());
         if (int(value1) > int(value2)):
-            Maexle.setScore(value1);
-            self.switch_window.emit()
+            Maexle.setScore(value1)
+            if(self.computerGuess(value1)):
+                self.switch_window.emit()
+            else:
+                pass
         else:
             print("Dein Wert ist zu niedrig!");
-        #TODO: implement a computer decision if he believes the player or not
+        
+    def computerGuess(self, inputValue):
+        roll = random.randint(2, 20) #TODO: Maybe flatten the curve so that the game takes somewhat longer?
+        if (inputValue > roll):
+            print("Der Computer glaubt dir nicht")
+            if(Maexle.getValueForRoll(int(self.playersRoll)) == inputValue):
+                print("Du gewinnst!")
+            else:
+                print("Du hast verloren!")
+        else:
+            print("Der Computer glaubt dir")
+            return True
 
 
 class WindowTwo(QtWidgets.QDialog):
     
     switch_window = QtCore.pyqtSignal()
-    #mv = Maexle();
     computerRoll = "";
     newValue = "";
 
@@ -118,7 +132,7 @@ class WindowTwo(QtWidgets.QDialog):
         self.switch_window.emit()
         
     def gameOver(self): #TODO: Needs its own Pop-Up
-        if(int(self.computerRoll) == self.newValue):
+        if(Maexle.getValueForRoll(self.computerRoll) == self.newValue):
             print("Der Computer gewinnt")
         else:
             print("Der Spieler gewinnt! Der Computer hatte eine " + self.computerRoll)
@@ -131,15 +145,17 @@ class WindowTwo(QtWidgets.QDialog):
         computerRollValue = Maexle.getValueForRoll(self.computerRoll);
         if(computerRollValue > Maexle.getScore()):
             self.computerResult.setText(self.computerRoll);
-            self.newValue = int(self.computerRoll)
+            self.newValue = computerRollValue
         else:
-            range = random.randint(1, 4); #TODO: make this smarter
-            self.newValue = Maexle.getScore() + range;
-            if (self.newValue <= 21):
-                self.newValue = 21                
+            #use a degressive function to pick a random number from the left over number/value space 
+            numSpace = 21 - Maexle.getScore()
+            x = random.randint(0, 5) 
+            self.newValue = round(numSpace*(1-0.9*0.8**x)) + Maexle.getScore()
+            if (self.newValue >= 21):
+                self.newValue = 21   
             self.computerResult.setText(str(Maexle.getValueToRoll(self.newValue)))
             
-        Maexle.setScore(Maexle.getValueForRoll(self.newValue))
+        Maexle.setScore(self.newValue)
              
         
 
