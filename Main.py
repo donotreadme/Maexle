@@ -2,6 +2,7 @@ import sys, random
 from PyQt5 import QtCore, QtWidgets, uic
 
 score = 0
+message = ""
 values = {
                 "0": 0,
                 "31": 1,
@@ -73,15 +74,16 @@ class MainWindow(QtWidgets.QDialog, Maexle):
     playersRoll = 0
 
     def __init__(self):
+        #initialize the GUI for the players round
         QtWidgets.QDialog.__init__(self)
-        uic.loadUi("playerMove.ui", self) # Load the .ui file 
+        uic.loadUi("playerMove.ui", self) 
         self.setWindowTitle('Player')   
         self.currentValue.setText(str(Maexle.getValueToRoll(Maexle.getScore())))
         self.buttonCommit.clicked.connect(self.switch)
         self.buttonRoll.clicked.connect(self.rollDices)
         
     def rollDices(self):
-        #roll two dices
+        #roll two dices, sort them and pass to the GUI
         r1 = random.randint(1, 6)
         self.leftDice.setText(str(r1))
         r2 = random.randint(1, 6)
@@ -95,14 +97,14 @@ class MainWindow(QtWidgets.QDialog, Maexle):
         if (int(value1) > int(value2)):
             Maexle.setScore(value1)
             if(self.computerGuess(value1)):
-                self.switch_window.emit()
+                controller.show_window_two()
             else:
                 pass
         else:
             print("Dein Wert ist zu niedrig!");
         
     def computerGuess(self, inputValue):
-        roll = random.randint(2, 20) #TODO: Maybe flatten the curve so that the game takes somewhat longer?
+        roll = random.randint(2, 20) #TODO: Maybe flatten the curve so the game continues somewhat longer?
         if (inputValue > roll):
             print("Der Computer glaubt dir nicht")
             if(Maexle.getValueForRoll(int(self.playersRoll)) == inputValue):
@@ -121,6 +123,7 @@ class WindowTwo(QtWidgets.QDialog):
     newValue = "";
 
     def __init__(self):
+        #initialize the GUI for the computers round
         QtWidgets.QDialog.__init__(self)
         uic.loadUi('computerMove.ui', self) # Load the .ui file
         self.setWindowTitle('Computer')
@@ -129,25 +132,32 @@ class WindowTwo(QtWidgets.QDialog):
         self.buttonLie.clicked.connect(self.gameOver)
         
     def switch(self):
-        self.switch_window.emit()
+        controller.show_main()
         
-    def gameOver(self): #TODO: Needs its own Pop-Up
+    def gameOver(self):
+        global message
+        message = ""
         if(Maexle.getValueForRoll(self.computerRoll) == self.newValue):
-            print("Der Computer gewinnt")
+            print("Der Computer gewinnt")   
+            message = "Der Computer gewinnt"
         else:
             print("Der Spieler gewinnt! Der Computer hatte eine " + self.computerRoll)
+            message = "Der Spieler gewinnt! Der Computer hatte eine " + self.computerRoll
+        controller.show_game_over()
         
     def computerRoll(self):
         #roll two random numbers in the space from 1 to 6 and then sort them
         r1 = random.randint(1, 6)
         r2 = random.randint(1, 6)        
         self.computerRoll = Maexle.sortRoll(r1, r2)
-        computerRollValue = Maexle.getValueForRoll(self.computerRoll);
+        computerRollValue = Maexle.getValueForRoll(self.computerRoll)
+        #if the computer rolled value higher as the current score pass it to the gui
+        #else create a random new value
         if(computerRollValue > Maexle.getScore()):
-            self.computerResult.setText(self.computerRoll);
+            self.computerResult.setText(self.computerRoll)
             self.newValue = computerRollValue
         else:
-            #use a degressive function to pick a random number from the left over number/value space 
+            #use a degressive function to pick a random number from the number space above the score 
             numSpace = 21 - Maexle.getScore()
             x = random.randint(0, 5) 
             self.newValue = round(numSpace*(1-0.9*0.8**x)) + Maexle.getScore()
@@ -157,13 +167,28 @@ class WindowTwo(QtWidgets.QDialog):
             
         Maexle.setScore(self.newValue)
              
+
+class GameOver(QtWidgets.QDialog):
+    def __init__(self):
+        QtWidgets.QDialog.__init__(self)
+        uic.loadUi('gameOver.ui', self) # Load the .ui file
+        self.setWindowTitle('Game Over')
+        self.textMessage.setText(message)
+        self.buttonPlayAgain.clicked.connect(self.restart)
         
+    def restart(self):
+        Maexle.setScore(0)
+        controller.show_main()
+        
+           
 
 class Login(QtWidgets.QWidget):
 
     switch_window = QtCore.pyqtSignal()
 
     def __init__(self):
+        #can be thrown away, because never used
+        #but was kept as a reminder of how to create GUIs from source code 
         QtWidgets.QWidget.__init__(self)
         self.setWindowTitle('Login')
 
@@ -181,39 +206,37 @@ class Login(QtWidgets.QWidget):
 
 
 class Controller:
-
+    
     def __init__(self):
-        pass
+        self.window = MainWindow()
 
     def show_login(self):
-         self.login = Login()
-         self.login.switch_window.connect(self.show_main)
-         self.login.show()
+         pass #see comment in the Login class
 
     def show_main(self):
+        self.window.close()
         self.window = MainWindow()
-        self.window.switch_window.connect(self.show_window_two)
-        #self.login.close()
-        try:
-            self.window_two.close()
-        except:
-            print("Window two wasnt' loaded!")
         self.window.show()
 
     def show_window_two(self):
-        self.window_two = WindowTwo()
-        self.window_two.switch_window.connect(self.show_main)
         self.window.close()
-        self.window_two.show()
+        self.window = WindowTwo()
+        self.window.show()
+        
+    def show_game_over(self):
+        self.window.close()
+        self.window = GameOver()
+        self.window.show()
+        
+        
 
+controller = Controller()
 
 def main():
-    app = QtWidgets.QApplication(sys.argv)
-    controller = Controller()
+    Maexle.setScore(0)
+    app = QtWidgets.QApplication(sys.argv)    
     controller.show_main()
-    #controller.show_login()
     sys.exit(app.exec_())
-    #TODO: win / lose screen (with 'play again' option)
 
 
 if __name__ == '__main__':
