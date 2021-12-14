@@ -111,6 +111,7 @@ class MainWindow(QtWidgets.QDialog, Maexle):
                 print("Du gewinnst!")
             else:
                 print("Du hast verloren!")
+            controller.show_game_over()
         else:
             print("Der Computer glaubt dir")
             return True
@@ -205,7 +206,7 @@ class Login(QtWidgets.QWidget):
         self.switch_window.emit()
 
 
-class Controller:
+class Controller(QtWidgets.QWidget):
     
     def __init__(self):
         self.window = MainWindow()
@@ -230,11 +231,13 @@ class Controller:
         
         
 
-controller = Controller()
+controller = None
 
 def main():
     Maexle.setScore(0)
-    app = QtWidgets.QApplication(sys.argv)    
+    app = QtWidgets.QApplication(sys.argv)  
+    global controller 
+    controller = Controller()
     controller.show_main()
     sys.exit(app.exec_())
 
