@@ -28,8 +28,7 @@ values = {
                 "21": 21,
                 }
 
-class Maexle:    
-    
+class Maexle:       
     def __init__(self):
         pass
     
@@ -69,7 +68,6 @@ class Maexle:
     
 
 class MainWindow(QtWidgets.QDialog, Maexle):
-
     switch_window = QtCore.pyqtSignal()
     playersRoll = 0
 
@@ -106,11 +104,15 @@ class MainWindow(QtWidgets.QDialog, Maexle):
     def computerGuess(self, inputValue):
         roll = random.randint(2, 20) #TODO: Maybe flatten the curve so the game continues somewhat longer?
         if (inputValue > roll):
-            print("Der Computer glaubt dir nicht")
+            global message
+            message = "Der Computer glaubt dir nicht \n"            
+            # check if the player lied and return the corresponding gameover message
             if(Maexle.getValueForRoll(int(self.playersRoll)) == inputValue):
-                print("Du gewinnst!")
+                message += "Du gewinnst!"
+                print(message)
             else:
-                print("Du hast verloren!")
+                message += "Du hast verloren!"
+                print(message)
             controller.show_game_over()
         else:
             print("Der Computer glaubt dir")
@@ -179,12 +181,10 @@ class GameOver(QtWidgets.QDialog):
         
     def restart(self):
         Maexle.setScore(0)
-        controller.show_main()
-        
+        controller.show_main()       
            
 
 class Login(QtWidgets.QWidget):
-
     switch_window = QtCore.pyqtSignal()
 
     def __init__(self):
@@ -206,8 +206,7 @@ class Login(QtWidgets.QWidget):
         self.switch_window.emit()
 
 
-class Controller(QtWidgets.QWidget):
-    
+class Controller(QtWidgets.QWidget):    
     def __init__(self):
         self.window = MainWindow()
 
@@ -227,8 +226,7 @@ class Controller(QtWidgets.QWidget):
     def show_game_over(self):
         self.window.close()
         self.window = GameOver()
-        self.window.show()
-        
+        self.window.show()       
         
 
 controller = None
